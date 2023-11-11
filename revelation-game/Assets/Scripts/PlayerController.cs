@@ -20,7 +20,7 @@ public class PlayerController : MonoBehaviour
 
     // Private Variables
     private Rigidbody _rb;
-    private bool isGrounded;
+    private bool isGrounded = true;
 
     private void Start()
     {
@@ -80,6 +80,9 @@ public class PlayerController : MonoBehaviour
 
         if (isJumping)
         {
+            if (!Input.GetKey(KeyCode.Space))
+                _jumpForce = _jumpForce / 2;
+
             // Gradually decrease jumpForce to make it smoother
             _jumpForce -= Time.fixedDeltaTime * 50;
 
@@ -92,9 +95,6 @@ public class PlayerController : MonoBehaviour
 
         int layerMask = 1 << 3;
 
-        // This would cast rays only against colliders in layer 8.
-        // But instead we want to collide against everything except layer 8. The ~ operator does this, it inverts a bitmask.
-        //layerMask = ~layerMask;
 
         RaycastHit hit;
         // Does the ray intersect any objects excluding the player layer
@@ -108,6 +108,7 @@ public class PlayerController : MonoBehaviour
 
     void RotatePlayer(float mouseX)
     {
+        mouseX = (mouseX + 180.0f) % 360.0f - 180.0f;
         // Smoothly interpolate between the current rotation and the target rotation
         Quaternion targetRotation = Quaternion.Euler(0, transform.eulerAngles.y + mouseX, 0);
         transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.fixedDeltaTime);
