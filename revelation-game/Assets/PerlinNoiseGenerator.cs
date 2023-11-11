@@ -11,6 +11,7 @@ public class PerlinNoiseGenerator : MonoBehaviour
     [SerializeField] private float frequency = 1f;
     [SerializeField] private float persistence = 0.5f;
     [SerializeField] private int octaves = 4;
+    [SerializeField] private float islandDistanceDropoff = 4;
 
     public RawImage terrainDisplay;
 
@@ -34,6 +35,9 @@ public class PerlinNoiseGenerator : MonoBehaviour
     {
         Texture2D terrainTexture = new Texture2D(width, height);
 
+        // Calculate the center of the image
+        Vector2 center = new Vector2(width / 2f, height / 2f);
+
         for (int x = 0; x < width; x++)
         {
             for (int y = 0; y < height; y++)
@@ -41,16 +45,18 @@ public class PerlinNoiseGenerator : MonoBehaviour
                 float xCoord = (float)x / width * scale;
                 float yCoord = (float)y / height * scale;
 
+                // Calculate distance from the current pixel to the center
+                float distanceToCenter = Vector2.Distance(new Vector2(x, y), center) / islandDistanceDropoff;
+
                 float clumpedValue = GeneratePerlinNoise(xCoord, yCoord);
 
-                // Apply elevation to color with increased contrast
-                float elevation = Mathf.Pow(clumpedValue, 2) * amplitude; // Apply a power function (you can experiment with the exponent)
+                // Modulate elevation based on the distance to the center
+                float elevation = Mathf.Pow(clumpedValue, 2) * amplitude * (1f - distanceToCenter / Mathf.Max(center.x, center.y));
 
                 // Simulate different terrain features based on elevation
 
-
                 // Apply elevation to color (you can customize this mapping)
-                Color color = new Color(elevation , elevation, elevation);
+                Color color = new Color(elevation, elevation, elevation);
 
                 // Set pixel color in the texture
                 terrainTexture.SetPixel(x, y, color);

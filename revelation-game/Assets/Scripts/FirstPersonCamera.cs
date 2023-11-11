@@ -11,6 +11,7 @@ public class FirstPersonCamera : MonoBehaviour
     public float rotationSpeed; // Speed of mouse X rotation
     public float maxDistance = 5.0f; // Maximum distance from the target
     public LayerMask obstacleLayer; // Layer mask for obstacles
+    public Vector3 offset;
 
     private Transform playerTransform;
     private float currentRotationAngleX = 0.0f;
@@ -39,6 +40,6 @@ public class FirstPersonCamera : MonoBehaviour
         transform.rotation = Quaternion.Slerp(transform.rotation, newRotation, smoothSpeed * Time.fixedDeltaTime);
 
         // Set the camera position to the player's position
-        transform.position = playerTransform.position;
+        transform.position = playerTransform.position + offset;
     }
 }

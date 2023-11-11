@@ -14,6 +14,7 @@ public class HexOffset : MonoBehaviour
     public Material sand;
     public Material rock;
     public GameObject player;
+    public float heightDiff;
     public RawImage perlin; // Reference to the RawImage component containing the height map
     Texture2D heightMap;
 
@@ -49,6 +50,7 @@ public class HexOffset : MonoBehaviour
             for (int x = 0; x < terrainCoordinates.GetLength(1); x++)
             {
                 GameObject hex = Instantiate(hexTile);
+                hex.transform.localScale = new Vector3(this.transform.localScale.x, this.transform.localScale.z, this.transform.localScale.y);
                 terrainCoordinates[x, z] = hex;
 
                 float offsetX = z % 2 == 1 ?
@@ -58,23 +60,20 @@ public class HexOffset : MonoBehaviour
                 float offsetZ = z * .75f * (2 * hexHeight);
 
                 Color pixelColor = heightMap.GetPixel(x, z);
-                float yOffset = pixelColor.r * 20f; // Assuming the red channel represents the height
+                float yOffset = pixelColor.r * heightDiff; // Assuming the red channel represents the height
 
                 hex.transform.position = new Vector3(offsetX, yOffset, offsetZ);
 
                 // Set material based on yOffset
-                if (yOffset < 1.5f)
+                if (yOffset < 3f)
                 {
                     Destroy(hex);
                 }
-                if (yOffset <= 3f)
+                if (yOffset <= 5f)
                 {
                     UpdateMaterial(hex, sand);
                 }
-                else if (yOffset > 10f)
-                {
-                    UpdateMaterial(hex, rock);
-                }
+
 
                 if (x == 0 || z == 0 || x == terrainCoordinates.GetLength(1) - 1 || z == terrainCoordinates.GetLength(0) - 1)
                 {
