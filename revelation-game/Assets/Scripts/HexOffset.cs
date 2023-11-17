@@ -59,12 +59,16 @@ public class HexOffset : MonoBehaviour
         Color pixelColor = treeMap.GetPixel(x, z);
         if (pixelColor.g == 1)
         {
-            GameObject treeObj = Instantiate(tree);
-            GameObject hex = terrainCoordinates[x, z];
-            float objectHeight = hex.GetComponent<MeshCollider>().bounds.size.y / 2;
-            treeObj.transform.parent = hex.transform;
-            treeObj.transform.position = new Vector3(hex.transform.position.x + UnityEngine.Random.Range(-10, 10), hex.transform.position.y + objectHeight, hex.transform.position.z + UnityEngine.Random.Range(-10, 10));
-            treeObj.transform.rotation = new Quaternion(0, UnityEngine.Random.Range(0, 360), 0, 1);
+            for (int i = 0; i < UnityEngine.Random.Range(1, 4); i++)
+            {
+                GameObject treeObj = Instantiate(tree);
+                GameObject hex = terrainCoordinates[x, z];
+                float objectHeight = hex.GetComponent<MeshCollider>().bounds.size.y / 2;
+                treeObj.transform.parent = hex.transform;
+                treeObj.transform.position = new Vector3(hex.transform.position.x + UnityEngine.Random.Range(-10, 10), hex.transform.position.y + objectHeight, hex.transform.position.z + UnityEngine.Random.Range(-10, 10));
+                treeObj.transform.rotation = new Quaternion(0, UnityEngine.Random.Range(0, 360), 0, 1);
+
+            }
 
         }
 

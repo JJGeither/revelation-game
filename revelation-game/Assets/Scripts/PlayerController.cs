@@ -111,6 +111,7 @@ public class PlayerController : MonoBehaviour
         mouseX = (mouseX + 180.0f) % 360.0f - 180.0f;
         // Smoothly interpolate between the current rotation and the target rotation
         Quaternion targetRotation = Quaternion.Euler(0, transform.eulerAngles.y + mouseX, 0);
-        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.fixedDeltaTime);
+        transform.rotation = targetRotation;
+            //Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.fixedDeltaTime);
     }
 }

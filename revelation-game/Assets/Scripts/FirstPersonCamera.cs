@@ -37,7 +37,8 @@ public class FirstPersonCamera : MonoBehaviour
         Quaternion newRotation = Quaternion.Euler(currentRotationAngleY, playerTransform.eulerAngles.y, 0f);
 
         // Smoothly interpolate towards the desired rotation
-        transform.rotation = Quaternion.Slerp(transform.rotation, newRotation, smoothSpeed * Time.fixedDeltaTime);
+        //transform.rotation = Quaternion.Slerp(transform.rotation, newRotation, smoothSpeed * Time.fixedDeltaTime);
+        transform.rotation = newRotation;
 
         // Set the camera position to the player's position
         transform.position = playerTransform.position + offset;
