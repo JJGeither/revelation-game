@@ -1,4 +1,5 @@
 using System.Collections;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class SwordAnimation : MonoBehaviour
@@ -15,7 +16,6 @@ public class SwordAnimation : MonoBehaviour
     }
 
     private PlayerState currentState = PlayerState.Idle;
-    private bool isBackswing = false;
 
     void Start()
     {
@@ -24,45 +24,59 @@ public class SwordAnimation : MonoBehaviour
 
     void Update()
     {
+
         if (Input.GetMouseButtonDown(1))
         {
             if (currentState == PlayerState.Idle)
             {
-                currentState = PlayerState.Attacking;
-                anim.SetTrigger("isAttacking");
-                float attackAnimationLength = GetAnimationLength("Sword|Attack");
-                StartCoroutine(AttackSequence(attackAnimationLength));
+                    float attackAnimationLength = GetAnimationLength("Sword|Attack.001");
+                    StartCoroutine(AttackSequence(attackAnimationLength));
+
+
             }
-            else if (currentState == PlayerState.Attacking && !isBackswing)
+            else if (currentState == PlayerState.Attacking && !anim.GetBool("isBackswing"))
             {
                 float remainingTime = GetRemainingAttackTime();
                 if (remainingTime <= backswingTime)
                 {
-                    anim.SetTrigger("isBackswing");
                     StartCoroutine(InitiateBackswing(remainingTime));
                 }
             }
         }
+
     }
 
     IEnumerator InitiateBackswing(float remainingTime)
     {
-        isBackswing = true;
-        yield return new WaitForSeconds(backswingTime);
-
-        float backswingAnimationLength = GetAnimationLength("Sword|Backswing");
-        yield return new WaitForSeconds(backswingAnimationLength  + cooldown);
-        currentState = PlayerState.Idle;
-        isBackswing = false;
+        while (anim.IsInTransition(0))
+        {
+            yield return null;
+        }
+        yield return new WaitForSeconds(remainingTime);
+        anim.SetBool("isBackswing", true);
+        float backswingAnimationLength = GetAnimationLength("Sword|BackSwing.001");
+        yield return new WaitForSeconds(backswingAnimationLength);
+        anim.SetBool("isBackswing", false);
     }
 
     IEnumerator AttackSequence(float attackAnimationLength)
     {
+        currentState = PlayerState.Attacking;
+        anim.SetTrigger("isAttacking");
         yield return new WaitForSeconds(attackAnimationLength);
-        if (!isBackswing)
+
+        while (anim.GetBool("isBackswing"))
         {
-            currentState = PlayerState.Idle;
+            yield return null;
         }
+
+        endAttack();
+    }
+
+    void endAttack()
+    {
+        anim.SetTrigger("finishAttack");
+        currentState = PlayerState.Idle;
     }
 
     float GetAnimationLength(string clipName)
@@ -83,9 +97,24 @@ public class SwordAnimation : MonoBehaviour
 
     float GetRemainingAttackTime()
     {
-        AnimatorStateInfo currentStateInfo = anim.GetCurrentAnimatorStateInfo(0);
-        float currentTime = currentStateInfo.normalizedTime * currentStateInfo.length;
-        float remainingTime = GetAnimationLength("Sword|Attack") - currentTime;
+        // Get the current state information of the Animator
+        AnimatorStateInfo stateInfo = anim.GetCurrentAnimatorStateInfo(0);
+
+
+        // Check the normalized time (0 to 1) to see how long the current animation has been running
+        float normalizedTime = stateInfo.normalizedTime;
+
+        // Get the duration of the current animation clip
+        float animationLength = stateInfo.length;
+
+        // Calculate the actual time the animation has been running
+        float currentTime = normalizedTime * animationLength;
+
+        // Log or use currentTime as needed
+        Debug.Log("Current Time: " + currentTime);
+
+        float remainingTime = GetAnimationLength("Sword|Attack.001") - currentTime;
         return remainingTime;
     }
+
 }

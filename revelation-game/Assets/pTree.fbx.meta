@@ -1,23 +1,8 @@
 fileFormatVersion: 2
-guid: fad6b42e3018cae41951fb050172151c
+guid: 817fbe0ead35769469cae6aeb5dfc534
 ModelImporter:
   serializedVersion: 22102
-  internalIDToNameTable:
-  - first:
-      74: -2987361744789658669
-    second: Sword|Attack
-  - first:
-      74: 3382824607925902107
-    second: Sword|Attack.001
-  - first:
-      74: -5693653460642296088
-    second: Sword|BackSwing
-  - first:
-      74: -2557296502046836226
-    second: Sword|Idle
-  - first:
-      74: 5934271122631945782
-    second: Sword|BackSwing.001
+  internalIDToNameTable: []
   externalObjects: {}
   materials:
     materialImportMode: 2
@@ -104,7 +89,7 @@ ModelImporter:
     armStretch: 0.05
     legStretch: 0.05
     feetSpacing: 0
-    globalScale: 0.1
+    globalScale: 0.001
     rootMotionBoneName: 
     hasTranslationDoF: 0
     hasExtraRoot: 0
