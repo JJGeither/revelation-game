@@ -1,5 +1,4 @@
 using System.Collections;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class SwordAnimation : MonoBehaviour
@@ -7,6 +6,10 @@ public class SwordAnimation : MonoBehaviour
     public Animator anim;
     public float backswingTime;
     public float cooldown;
+    public string current_animation;
+    bool isBackswing;
+    AnimatorClipInfo[] animatorinfo;
+    int targetTransitionNameHash = Animator.StringToHash("EndAttackTransition");
 
     private enum PlayerState
     {
@@ -20,63 +23,82 @@ public class SwordAnimation : MonoBehaviour
     void Start()
     {
         anim = GetComponent<Animator>();
+        isBackswing = false;
     }
 
     void Update()
     {
+        animatorinfo = this.anim.GetCurrentAnimatorClipInfo(0);
+        current_animation = animatorinfo[0].clip.name;
+        Debug.Log(current_animation);
 
         if (Input.GetMouseButtonDown(1))
         {
-            if (currentState == PlayerState.Idle)
+            if (!anim.IsInTransition(0) && current_animation != "Sword|Attack.001")
             {
-                    float attackAnimationLength = GetAnimationLength("Sword|Attack.001");
-                    StartCoroutine(AttackSequence(attackAnimationLength));
-
-
+                anim.SetTrigger("attack");
+                //Debug.Log("ATTACK");
+                //float attackAnimationLength = GetAnimationLength("Sword|Attack.001");
+                //StartCoroutine(AttackSequence(attackAnimationLength));
             }
-            else if (currentState == PlayerState.Attacking && !anim.GetBool("isBackswing"))
+            else if ( current_animation == "Sword|Attack.001" && !anim.IsInTransition(0))
             {
-                float remainingTime = GetRemainingAttackTime();
-                if (remainingTime <= backswingTime)
-                {
-                    StartCoroutine(InitiateBackswing(remainingTime));
-                }
+
+                anim.SetTrigger("backswing");
+                //Debug.Log("Back");
+                //StartCoroutine(InitiateBackswing());
+            } else if (current_animation == "Sword|BackSwing")
+            {
+                anim.SetTrigger("attack");
             }
         }
-
-    }
-
-    IEnumerator InitiateBackswing(float remainingTime)
-    {
-        while (anim.IsInTransition(0))
-        {
-            yield return null;
-        }
-        yield return new WaitForSeconds(remainingTime);
-        anim.SetBool("isBackswing", true);
-        float backswingAnimationLength = GetAnimationLength("Sword|BackSwing.001");
-        yield return new WaitForSeconds(backswingAnimationLength);
-        anim.SetBool("isBackswing", false);
     }
 
     IEnumerator AttackSequence(float attackAnimationLength)
     {
+        anim.SetTrigger("attack");
+        // anim.SetBool("isAttacking", true);
         currentState = PlayerState.Attacking;
-        anim.SetTrigger("isAttacking");
-        yield return new WaitForSeconds(attackAnimationLength);
+
+        float attackLength = GetAnimationLength("Sword|Attack.001");
+        //anim.SetBool("isAttacking", false);
 
         while (anim.GetBool("isBackswing"))
         {
             yield return null;
         }
+        Debug.Log("DONE");
 
-        endAttack();
+        //EndAttack();
     }
 
-    void endAttack()
+    void EndAttack()
     {
+
+        anim.SetBool("isBackswing", false);
+        anim.SetBool("isAttacking", false);
         anim.SetTrigger("finishAttack");
+
         currentState = PlayerState.Idle;
+
+    }
+
+    IEnumerator InitiateBackswing()
+    {
+        anim.SetBool("isBackswing", true);
+        //float remainingTime = GetRemainingAttackTime();
+        //Debug.Log(remainingTime);
+        //yield return new WaitForSeconds(remainingTime);
+        while (anim.GetBool("isAttacking"))
+        {
+            yield return null;
+        }
+
+
+        float backswingAnimationLength = GetAnimationLength("Sword|BackSwing.001");
+        yield return new WaitForSeconds(backswingAnimationLength);
+
+        anim.SetBool("isBackswing", false);
     }
 
     float GetAnimationLength(string clipName)
@@ -94,27 +116,15 @@ public class SwordAnimation : MonoBehaviour
         return length;
     }
 
-
     float GetRemainingAttackTime()
     {
-        // Get the current state information of the Animator
         AnimatorStateInfo stateInfo = anim.GetCurrentAnimatorStateInfo(0);
-
-
-        // Check the normalized time (0 to 1) to see how long the current animation has been running
         float normalizedTime = stateInfo.normalizedTime;
-
-        // Get the duration of the current animation clip
         float animationLength = stateInfo.length;
-
-        // Calculate the actual time the animation has been running
         float currentTime = normalizedTime * animationLength;
-
-        // Log or use currentTime as needed
-        Debug.Log("Current Time: " + currentTime);
-
         float remainingTime = GetAnimationLength("Sword|Attack.001") - currentTime;
-        return remainingTime;
-    }
 
+
+        return Mathf.Max(0f, remainingTime); // Ensure remaining time is non-negative
+    }
 }
