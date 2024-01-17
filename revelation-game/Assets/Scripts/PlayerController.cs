@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
 
 public class PlayerController : MonoBehaviour
 {
@@ -11,16 +12,24 @@ public class PlayerController : MonoBehaviour
     [SerializeField] public float deceleration;
     [SerializeField] public float gravityScale;
     [SerializeField] public float jumpForce;
-    [SerializeField] public float rotationSpeed;
+    [SerializeField] public float cameraRotationSpeed;
+    [SerializeField] public ParticleSystem ps_blood;
+    [SerializeField] public TextMeshProUGUI healthText; // Reference to the UI Text for displaying health
     public float groundRayLength;
 
     private bool isJumping = false; // Flag to indicate jump input
     private float _playerSpeed;
     private float _jumpForce = 0; // The current jump force
+    private float _health = 100; // The current jump force
+    private float _maxHealth = 100; // The current jump force
+    private float _speedModifier = 1;
 
     // Private Variables
     private Rigidbody _rb;
     private bool isGrounded = true;
+    private bool isCooldown = false; // Flag for hit cooldown
+    [SerializeField] private float cooldownTime = 2f; // Cooldown time in seconds
+
 
     private void Start()
     {
@@ -30,21 +39,26 @@ public class PlayerController : MonoBehaviour
 
     public void Update()
     {
+        if (isCooldown) { Debug.Log("cooldown"); }
+        healthText.text = _health.ToString() + "/" + _maxHealth.ToString();
+
         if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
         {
             isJumping = true;
             _jumpForce = jumpForce; // Initialize jump force
             Debug.Log("Space key pressed");
         }
+
+        // Get mouse X input for rotation
+        float mouseX = Input.GetAxis("Mouse X");
+
+        // Rotate the player based on the mouse X input
+        RotatePlayer(mouseX);
     }
 
     void FixedUpdate()
     {
-        // Get mouse X input for rotation
-        float mouseX = Input.GetAxis("Mouse X") * rotationSpeed;
 
-        // Rotate the player based on the mouse X input
-        RotatePlayer(mouseX);
 
         float verticalInput = Input.GetAxis("Vertical");
         float horizontalInput = Input.GetAxis("Horizontal");
@@ -53,12 +67,12 @@ public class PlayerController : MonoBehaviour
         float targetSpeed = _playerSpeed;
 
         if (verticalInput != 0.0 || horizontalInput != 0.0)
-            targetSpeed += acceleration * Time.fixedDeltaTime;
+            targetSpeed += acceleration * Time.fixedDeltaTime * _speedModifier;
         else
-            targetSpeed -= deceleration * Time.fixedDeltaTime;
+            targetSpeed -= deceleration * Time.fixedDeltaTime * _speedModifier;
 
         // Clamp the speed to the specified range
-        targetSpeed = Mathf.Clamp(targetSpeed, playerMinSpeed, playerMaxSpeed);
+        targetSpeed = Mathf.Clamp(targetSpeed, playerMinSpeed, playerMaxSpeed * _speedModifier);
 
         // Smoothly adjust the playerSpeed towards the targetSpeed
         _playerSpeed = Mathf.MoveTowards(_playerSpeed, targetSpeed, acceleration * Time.fixedDeltaTime);
@@ -95,15 +109,15 @@ public class PlayerController : MonoBehaviour
 
         int layerMask = 1 << 3;
 
-
         RaycastHit hit;
         // Does the ray intersect any objects excluding the player layer
-        if (Physics.Raycast(transform.position, transform.TransformDirection(Vector3.down), out hit, groundRayLength, layerMask))
+        if (Physics.Raycast(transform.position, transform.TransformDirection(Vector3.down), out hit, groundRayLength))
             isGrounded = true;
         else
             isGrounded = false;
 
-        _rb.AddForce(Physics.gravity * gravityScale, ForceMode.Acceleration);
+        if (!isGrounded) 
+            _rb.AddForce(new Vector3(0,-gravityScale,0), ForceMode.Acceleration);
     }
 
     void RotatePlayer(float mouseX)
@@ -114,4 +128,44 @@ public class PlayerController : MonoBehaviour
         transform.rotation = targetRotation;
             //Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.fixedDeltaTime);
     }
+
+    private void PlayParticleSystem(ParticleSystem ps)
+    {
+        Debug.Log("played");
+        if (!ps.isPlaying) ps.Play();
+
+        // Calculate duration and stop the particle system after one cycle
+        float duration = ps.main.duration;
+        Invoke(nameof(StopParticleSystem), duration);
+    }
+
+    private void StopParticleSystem()
+    {
+        ps_blood.Stop(); // Stop the particle system
+    }
+
+    public void SetSpeed(float speed)
+    {
+        _speedModifier *= speed;
+        Debug.Log("speed: " + _speedModifier);
+    }
+
+    private IEnumerator HitCooldown()
+    {
+        isCooldown = true; // Set cooldown flag
+        yield return new WaitForSeconds(cooldownTime); // Wait for cooldown duration
+        isCooldown = false; // Reset cooldown flag after cooldown is over
+    }
+
+    private void OnCollisionStay(Collision collision)
+    {
+        if (!isCooldown && collision.gameObject.CompareTag("Enemy"))
+        {
+            StartCoroutine(HitCooldown()); // Start the cooldown
+            PlayParticleSystem(ps_blood);
+            _health -= 10;
+            Debug.Log(_health);
+        }
+    }
+
 }

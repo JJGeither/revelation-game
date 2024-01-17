@@ -15,6 +15,8 @@ public class HexOffset : MonoBehaviour
     public Material rock;
     public GameObject player;
     public GameObject tree;
+    public GameObject pineTree;
+    public GameObject chest;
     public float heightDiff;
     public int dimensions;
 
@@ -40,6 +42,8 @@ public class HexOffset : MonoBehaviour
     void Start()
     {
         terrainCoordinates = new GameObject[dimensions, dimensions];
+        int seed = UnityEngine.Random.Range(0, 10000); // Generate a random seed between 0 and 9999
+        UnityEngine.Random.InitState(seed);
         perlinNoiseGenerator.DisplayPerlinTerrain(UnityEngine.Random.Range(0, 10000));
         treeNoiseGenerator.DisplayPerlinTree(UnityEngine.Random.Range(0, 10000));
         heightMap = perlin.texture as Texture2D;
@@ -54,6 +58,33 @@ public class HexOffset : MonoBehaviour
         obj.GetComponent<Renderer>().material = mat;
     }
 
+    public void GenerateChests(int x, int z)
+    {
+        Debug.Log("Chest attempt");
+        if (UnityEngine.Random.Range(1, 101) > 1)
+        {
+            GameObject chestObj = Instantiate(chest);
+            GameObject hex = terrainCoordinates[x, z];
+            float objectHeight = hex.GetComponent<MeshCollider>().bounds.size.y / 2;
+            chestObj.transform.parent = hex.transform;
+
+            // Adjust position as needed
+            float randomOffsetX = UnityEngine.Random.Range(0, 15) * (UnityEngine.Random.value > 0.5f ? 1 : -1);
+            float randomOffsetZ = UnityEngine.Random.Range(0, 15) * (UnityEngine.Random.value > 0.5f ? 1 : -1);
+
+            chestObj.transform.position = new Vector3(
+                hex.transform.position.x + randomOffsetX,
+                hex.transform.position.y + objectHeight,
+                hex.transform.position.z + randomOffsetZ
+            );
+
+            float randYRotation = UnityEngine.Random.Range(0, 360);
+            chestObj.transform.rotation = Quaternion.Euler(0, randYRotation, 0);
+            randYRotation = UnityEngine.Random.Range(1f, 2f); // Adjust the range for scaling
+            chestObj.transform.localScale *= randYRotation;
+        }
+    }
+
     public void GenerateTrees(int x, int z)
     {
         Color pixelColor = treeMap.GetPixel(x, z);
@@ -61,12 +92,33 @@ public class HexOffset : MonoBehaviour
         {
             for (int i = 0; i < UnityEngine.Random.Range(1, 4); i++)
             {
-                GameObject treeObj = Instantiate(tree);
+                GameObject treeObj;
+                if (UnityEngine.Random.value > 0.5f)
+                {
+                    treeObj = Instantiate(tree);
+                }
+                else
+                {
+                    treeObj = Instantiate(pineTree);
+                }
                 GameObject hex = terrainCoordinates[x, z];
                 float objectHeight = hex.GetComponent<MeshCollider>().bounds.size.y / 2;
                 treeObj.transform.parent = hex.transform;
-                treeObj.transform.position = new Vector3(hex.transform.position.x + UnityEngine.Random.Range(-10, 10), hex.transform.position.y + objectHeight, hex.transform.position.z + UnityEngine.Random.Range(-10, 10));
-                treeObj.transform.rotation = new Quaternion(0, UnityEngine.Random.Range(0, 360), 0, 1);
+                float randomOffsetX = UnityEngine.Random.Range(0, 15) * (UnityEngine.Random.value > 0.5f ? 1 : -1);
+                float randomOffsetZ = UnityEngine.Random.Range(0, 15) * (UnityEngine.Random.value > 0.5f ? 1 : -1);
+
+                treeObj.transform.position = new Vector3(
+                    hex.transform.position.x + randomOffsetX,
+                    hex.transform.position.y + objectHeight,
+                    hex.transform.position.z + randomOffsetZ
+                );
+
+                float randYRotation = UnityEngine.Random.Range(0, 360);
+                treeObj.transform.rotation = Quaternion.Euler(0, randYRotation, 0);
+                randYRotation = UnityEngine.Random.Range(1f, 2f); // Adjust the range for scaling
+                treeObj.transform.localScale *= randYRotation;
+
+
 
             }
 
@@ -104,6 +156,8 @@ public class HexOffset : MonoBehaviour
                     {
                         GenerateTrees(x, z);
                     } 
+
+                    GenerateChests(x, z);
 
                     if (x == 0 || z == 0 || x == terrainCoordinates.GetLength(1) - 1 || z == terrainCoordinates.GetLength(0) - 1)
                     {
