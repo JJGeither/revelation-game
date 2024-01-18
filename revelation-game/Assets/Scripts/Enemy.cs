@@ -96,27 +96,73 @@ public class Enemy : MonoBehaviour
         rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse); // Apply jump force once
     }
 
+    private void OnCollisionEnter(Collision collision)
+    {
+        HurtByThrownObject(collision);
+    }
+
     private void OnTriggerEnter(Collider other)
     {
         if (other.gameObject.CompareTag("Weapon"))
         {
-            PlayParticleSystem(ps_blood);
-            health -= 10;
-            Debug.Log(health);
+            // Calculate damage based on the speed of the thrown object
+            int damageAmount = 5;
 
-            if (health <= 0)
+            // Call EnemyHurt with the calculated damage amount
+            EnemyHurt(other.gameObject, damageAmount);
+
+            // Apply force backward and upward when hit
+            Vector3 forceDirection = (transform.position - other.transform.position).normalized + new Vector3(0, .3f, 0);
+            rb.AddForce(forceDirection * hitForce, ForceMode.Impulse);
+        }
+    }
+
+    private void HurtByThrownObject(Collision other)
+    {
+        // Get the Rigidbody component of the thrown object
+        Rigidbody thrownObjectRb = other.gameObject.GetComponent<Rigidbody>();
+
+        if (thrownObjectRb != null)
+        {
+            // Check the speed of the thrown object
+            float speed = thrownObjectRb.velocity.magnitude;
+
+            if (speed > 0.01f)
             {
-                PlayParticleSystem(ps_smoke);
-                Destroy(gameObject);
+                // Calculate damage based on the speed of the thrown object
+                int damageAmount = CalculateDamage(Mathf.RoundToInt(speed));
+
+                // Call EnemyHurt with the calculated damage amount
+                EnemyHurt(other.gameObject, damageAmount);
             }
             else
             {
-                // Apply force backward and upward when hit
-                Vector3 forceDirection = (transform.position - other.transform.position).normalized + new Vector3(0, .3F, 0);
-                rb.AddForce(forceDirection * hitForce, ForceMode.Impulse);
+                // Don't inflict damage if the object is not moving fast enough
+                Debug.Log("Object speed is not sufficient for damage.");
             }
         }
     }
+
+    private void EnemyHurt(GameObject other, int damageAmount)
+    {
+        // Inflict damage based on the calculated damage amount
+        PlayParticleSystem(ps_blood);
+        health -= damageAmount;
+        Debug.Log("Damage: " + damageAmount + ", Health: " + health);
+
+        if (health <= 0)
+        {
+            PlayParticleSystem(ps_smoke);
+            Destroy(gameObject);
+        }
+    }
+
+    private int CalculateDamage(float speed)
+    {
+        return Mathf.RoundToInt(speed * 0.8f);
+    }
+
+
 
 
     private void PlayParticleSystem(ParticleSystem ps)

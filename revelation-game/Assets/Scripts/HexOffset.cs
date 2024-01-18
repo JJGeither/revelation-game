@@ -15,6 +15,7 @@ public class HexOffset : MonoBehaviour
     public Material rock;
     public GameObject player;
     public GameObject tree;
+    public GameObject rockObject;
     public GameObject pineTree;
     public GameObject chest;
     public float heightDiff;
@@ -58,10 +59,40 @@ public class HexOffset : MonoBehaviour
         obj.GetComponent<Renderer>().material = mat;
     }
 
+    public void GenerateRocks(int x, int z)
+    {
+
+        int rocksCount = UnityEngine.Random.Range(-1, 3);
+
+        for (int i = 0; i < rocksCount; i++)
+        {
+            GameObject rockObj = Instantiate(rockObject);
+            GameObject hex = terrainCoordinates[x, z];
+            float objectHeight = hex.GetComponent<MeshCollider>().bounds.size.y / 2;
+            rockObj.transform.SetParent(hex.transform, true);
+
+            // Adjust position as needed
+            float randomOffsetX = UnityEngine.Random.Range(0, 15) * (UnityEngine.Random.value > 0.5f ? 1 : -1);
+            float randomOffsetZ = UnityEngine.Random.Range(0, 15) * (UnityEngine.Random.value > 0.5f ? 1 : -1);
+
+            rockObj.transform.position = new Vector3(
+                hex.transform.position.x + randomOffsetX,
+                hex.transform.position.y + objectHeight,
+                hex.transform.position.z + randomOffsetZ
+            );
+
+            //float randYRotation = UnityEngine.Random.Range(0, 360);
+            //rockObj.transform.rotation = Quaternion.Euler(0, randYRotation, 0);
+
+        }
+    }
+
+
+
     public void GenerateChests(int x, int z)
     {
         Debug.Log("Chest attempt");
-        if (UnityEngine.Random.Range(1, 101) > 1)
+        if (UnityEngine.Random.Range(1, 101) > 95)
         {
             GameObject chestObj = Instantiate(chest);
             GameObject hex = terrainCoordinates[x, z];
@@ -118,8 +149,6 @@ public class HexOffset : MonoBehaviour
                 randYRotation = UnityEngine.Random.Range(1f, 2f); // Adjust the range for scaling
                 treeObj.transform.localScale *= randYRotation;
 
-
-
             }
 
         }
@@ -155,8 +184,9 @@ public class HexOffset : MonoBehaviour
                     } else
                     {
                         GenerateTrees(x, z);
-                    } 
+                    }
 
+                    GenerateRocks(x, z);
                     GenerateChests(x, z);
 
                     if (x == 0 || z == 0 || x == terrainCoordinates.GetLength(1) - 1 || z == terrainCoordinates.GetLength(0) - 1)

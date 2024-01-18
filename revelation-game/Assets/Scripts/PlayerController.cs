@@ -12,6 +12,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] public float deceleration;
     [SerializeField] public float gravityScale;
     [SerializeField] public float jumpForce;
+    [SerializeField] public float throwForce;
     [SerializeField] public float cameraRotationSpeed;
     [SerializeField] public ParticleSystem ps_blood;
     [SerializeField] public TextMeshProUGUI healthText; // Reference to the UI Text for displaying health
@@ -58,7 +59,7 @@ public class PlayerController : MonoBehaviour
 
     void FixedUpdate()
     {
-
+        ThrowObject();
 
         float verticalInput = Input.GetAxis("Vertical");
         float horizontalInput = Input.GetAxis("Horizontal");
@@ -119,6 +120,115 @@ public class PlayerController : MonoBehaviour
         if (!isGrounded) 
             _rb.AddForce(new Vector3(0,-gravityScale,0), ForceMode.Acceleration);
     }
+
+    private Vector3 originalScale;  // Store the original scale
+
+    public void PickupObject(GameObject liftObj)
+    {
+        // Check if the object is not null
+        if (liftObj != null)
+        {
+            Transform heldObjectsTransform = transform.Find("HeldObjects");
+
+            if (heldObjectsTransform != null)
+            {
+                liftObj.transform.SetParent(heldObjectsTransform.transform, true);
+
+                // Store the original scale before modifying it
+                originalScale = liftObj.transform.localScale;
+
+                // Get the bounds of the stored object
+                var boundsOfStoredObject = new Bounds(Vector3.zero, Vector3.zero);
+                Collider liftObjCollider = liftObj.GetComponent<Collider>();
+
+                if (liftObjCollider != null)
+                {
+                    boundsOfStoredObject = liftObjCollider.bounds;
+                }
+
+                // Set the object's scale to fit within the sphere
+                float sphereRadius = 10f;
+                float scaleFactor = sphereRadius / boundsOfStoredObject.size.magnitude;
+                liftObj.transform.localScale = new Vector3(scaleFactor, scaleFactor, scaleFactor);
+
+                // Set the position to the left side of the player
+                Vector3 playerLeftPosition = transform.position - transform.right * 1.0f; // Adjust the value based on your preference
+                liftObj.transform.position = playerLeftPosition;
+
+                if (liftObjCollider != null)
+                {
+                    // Disable the collider while the object is held
+                    liftObjCollider.enabled = false;
+                }
+
+                // Check if the object has a Rigidbody component
+                Rigidbody liftObjRigidbody = liftObj.GetComponent<Rigidbody>();
+                if (liftObjRigidbody != null)
+                {
+                    // Set the object to be kinematic
+                    liftObjRigidbody.isKinematic = true;
+                }
+            }
+        }
+    }
+
+    void ThrowObject()
+    {
+        // Check if the left mouse button is pressed
+        if (Input.GetMouseButtonDown(0))
+        {
+            // Find the child object named "HeldObjects"
+            Transform heldObjectsTransform = transform.Find("HeldObjects");
+
+            // Check if HeldObjects exists and has at least one child
+            if (heldObjectsTransform != null && heldObjectsTransform.childCount > 0)
+            {
+                // Get the first object held
+                GameObject firstHeldObject = heldObjectsTransform.GetChild(0).gameObject;
+
+                // Detach the object from HeldObjects
+                firstHeldObject.transform.parent = null;
+
+                // Enable the collider of the thrown object
+                Collider thrownObjCollider = firstHeldObject.GetComponent<Collider>();
+                if (thrownObjCollider != null)
+                {
+                    thrownObjCollider.enabled = true;
+                }
+
+                // Add a Rigidbody component if not already present
+                Rigidbody thrownObjRigidbody = firstHeldObject.GetComponent<Rigidbody>();
+                if (thrownObjRigidbody == null)
+                {
+                    thrownObjRigidbody = firstHeldObject.AddComponent<Rigidbody>();
+                }
+
+                // Make the object not kinematic
+                if (thrownObjRigidbody != null)
+                {
+                    thrownObjRigidbody.isKinematic = false;
+                }
+
+                // Reset the scale to the original scale
+                firstHeldObject.transform.localScale = originalScale;
+
+                // Ignore collisions with the player
+                Physics.IgnoreCollision(firstHeldObject.GetComponent<Collider>(), GetComponent<Collider>());
+
+                // Get the direction the player is looking
+                Vector3 throwDirection = Camera.main.transform.forward;
+
+                // Apply force to throw the object in the direction the player is looking
+                thrownObjRigidbody.AddForce(throwDirection * throwForce, ForceMode.Impulse);
+            }
+        }
+    }
+
+
+
+
+
+
 
     void RotatePlayer(float mouseX)
     {

@@ -33,7 +33,7 @@ public class EnemySpawner : MonoBehaviour
         while (true)
         {
             // Calculate a random time interval between 20 to 60 seconds for testing purposes
-            float spawnInterval = Random.Range(60f, 80f);
+            float spawnInterval = Random.Range(20f, 30f);
 
             yield return new WaitForSeconds(spawnInterval);
 

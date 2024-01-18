@@ -15,6 +15,7 @@ public class FirstPersonCamera : MonoBehaviour
     public LayerMask obstacleLayer; // Layer mask for obstacles
     public Vector3 offset;
 
+    public PlayerController playerController;
 
     public Image reticleImage;
     public TextMeshProUGUI interactText;
@@ -25,6 +26,7 @@ public class FirstPersonCamera : MonoBehaviour
 
     void Start()
     {
+        playerController = target.GetComponent<PlayerController>();
         playerTransform = target.transform;
         Cursor.lockState = CursorLockMode.Locked; // Lock the cursor
         Cursor.visible = false; // Hide the cursor
@@ -48,30 +50,43 @@ public class FirstPersonCamera : MonoBehaviour
         ReticleInteraction();
     }
 
+
+
     void ReticleInteraction()
     {
-        int wallLayerMask = 1 << LayerMask.NameToLayer("Interactable");
-
         Ray ray = Camera.main.ScreenPointToRay(reticleImage.transform.position);
         RaycastHit hit;
 
-        // Use the layer mask to check for collisions with walls in the raycast
-        if (Physics.Raycast(ray, out hit, 5, wallLayerMask))
+        // Use the layer mask to check for collisions with any object in the raycast
+        if (Physics.Raycast(ray, out hit, 5))
         {
-            //Debug.Log("HIT: " + hit.collider.name);
-            interactText.enabled = true;
-            PlayerInteraction playerInteraction = hit.collider.GetComponent<PlayerInteraction>();
-            // Check for player input to trigger interaction
-            if (Input.GetKeyDown(KeyCode.E))
+            if (Input.GetKeyDown(KeyCode.R))
             {
-                playerInteraction.Interact();
+                playerController.PickupObject(hit.collider.gameObject);
             }
 
+            // Check if the hit object is on the specified layer
+            if (hit.collider.gameObject.layer == LayerMask.NameToLayer("Interactable"))
+            {
+                interactText.enabled = true;
+                PlayerInteraction playerInteraction = hit.collider.GetComponent<PlayerInteraction>();
+
+                // Check for player input to trigger interaction
+                if (Input.GetKeyDown(KeyCode.E))
+                {
+                    playerInteraction.Interact();
+                }
+            }
+            else
+            {
+                interactText.enabled = false;
+            }
         }
         else
         {
             interactText.enabled = false;
         }
     }
+
 
 }
