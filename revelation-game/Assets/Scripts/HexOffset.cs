@@ -4,8 +4,17 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+
+
 public class HexOffset : MonoBehaviour
 {
+    [SerializeField]
+    private List<GameObject> spawnTerrainObjects;
+
+    [SerializeField]
+    private List<int> spawnChanceMin, spawnChanceMax;
+
+    public GameObject TerrainElements;
 
     float hexWidth;
     float hexHeight;
@@ -16,6 +25,7 @@ public class HexOffset : MonoBehaviour
     public GameObject player;
     public GameObject tree;
     public GameObject rockObject;
+    public GameObject plantObject;
     public GameObject pineTree;
     public GameObject chest;
     public float heightDiff;
@@ -86,6 +96,42 @@ public class HexOffset : MonoBehaviour
 
         }
     }
+
+    public void GenerateObjects(int x, int z)
+    {
+        GameObject objectToGenerate;
+        for (int j = 0; j < spawnTerrainObjects.Count; j++)
+        {
+            objectToGenerate = spawnTerrainObjects[j];
+            int objectsCount = UnityEngine.Random.Range(spawnChanceMin[j], spawnChanceMax[j]);
+
+            for (int i = 0; i < objectsCount; i++)
+            {
+                GameObject generatedObject = Instantiate(objectToGenerate);
+                GameObject hex = terrainCoordinates[x, z];
+                float objectHeight = hex.GetComponent<MeshCollider>().bounds.size.y / 2;
+
+               // generatedObject.transform.SetParent(hex.transform, false);
+                generatedObject.transform.SetParent(TerrainElements.transform, false);
+
+                // Adjust position as needed
+                float randomOffsetX = UnityEngine.Random.Range(0, 15) * (UnityEngine.Random.value > 0.5f ? 1 : -1);
+                float randomOffsetZ = UnityEngine.Random.Range(0, 15) * (UnityEngine.Random.value > 0.5f ? 1 : -1);
+
+
+                generatedObject.transform.position = new Vector3(
+                    hex.transform.position.x + randomOffsetX,
+                    hex.transform.position.y + objectHeight,
+                    hex.transform.position.z + randomOffsetZ
+                );
+
+
+            }
+        }
+      
+
+    }
+
 
 
 
@@ -186,7 +232,8 @@ public class HexOffset : MonoBehaviour
                         GenerateTrees(x, z);
                     }
 
-                    GenerateRocks(x, z);
+                    //GenerateRocks(x, z);
+                    GenerateObjects(x, z);
                     GenerateChests(x, z);
 
                     if (x == 0 || z == 0 || x == terrainCoordinates.GetLength(1) - 1 || z == terrainCoordinates.GetLength(0) - 1)

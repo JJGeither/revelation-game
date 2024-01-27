@@ -15,7 +15,7 @@ public class FirstPersonCamera : MonoBehaviour
     public LayerMask obstacleLayer; // Layer mask for obstacles
     public Vector3 offset;
 
-    public PlayerController playerController;
+    public HoldingHandler holdingHandler;
 
     public Image reticleImage;
     public TextMeshProUGUI interactText;
@@ -26,7 +26,7 @@ public class FirstPersonCamera : MonoBehaviour
 
     void Start()
     {
-        playerController = target.GetComponent<PlayerController>();
+        holdingHandler = target.GetComponent<HoldingHandler>();
         playerTransform = target.transform;
         Cursor.lockState = CursorLockMode.Locked; // Lock the cursor
         Cursor.visible = false; // Hide the cursor
@@ -62,7 +62,7 @@ public class FirstPersonCamera : MonoBehaviour
         {
             if (Input.GetKeyDown(KeyCode.R))
             {
-                playerController.PickupObject(hit.collider.gameObject);
+                holdingHandler.PickupObject(hit.collider.gameObject);
             }
 
             // Check if the hit object is on the specified layer
